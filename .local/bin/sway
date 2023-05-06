@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+export $(gnome-keyring-daemon)
+export _JAVA_AWT_WM_NONREFPARENTING=1
+export SDL_VIDEODRIVER=wayland
+export MOZ_ENABLE_WAYLAND=1
+export XDG_SESSION_TYPE=wayland
+export XDG_SESSION_DESKTOP=sway
+export XDG_CURRENT_DESKTOP=sway
+export GDK_BACKEND='wayland,x11'
+export QT_AUTO_SCREEN_SCALE_FACTOR=1
+export QT_QPA_PLATFORM='wayland;xcb'
+export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
+
+dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
+dbus-update-activation-environment --systemd --all
+
+exec dbus-run-session /usr/bin/sway

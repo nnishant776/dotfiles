@@ -1,0 +1,29 @@
+theme = "onedark"
+
+[editor]
+line-number = "relative"
+color-modes = true
+scrolloff = 10
+gutters = ["diagnostics", "line-numbers", "spacer"]
+completion-trigger-len = 3
+true-color = true
+
+[editor.statusline]
+left = ["mode", "spinner"]
+center = ["file-name"]
+right = ["diagnostics", "selections", "file-encoding", "file-type", "position"]
+separator = "|"
+
+[editor.cursor-shape]
+insert = "bar"
+normal = "block"
+select = "underline"
+
+[editor.indent-guides]
+render = true
+character = "⋮"
+
+[editor.whitespace.render]
+space = "none"
+tab = "all"
+newline = "none"
