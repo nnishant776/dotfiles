@@ -29,14 +29,14 @@ tgdm() {
     if [ "$current_color_scheme" = "'prefer-light'" ] || [ "$current_color_scheme" = "'default'" ] ;then
         gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
         gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3-dark'
-        gsettings set org.gnome.desktop.interface cursor-theme 'DMZ-White'
+        gsettings set org.gnome.desktop.interface cursor-theme 'capitaine-cursors-light'
         ln -sf ~/.config/waybar/waybar-dark.config ~/.config/waybar/config
         ln -sf ~/.config/waybar/style-dark.css ~/.config/waybar/style.css
         ln -sf ~/.config/sway/sway-dark.config ~/.config/sway/config
     elif [ "$current_color_scheme" = "'prefer-dark'" ];then
         gsettings set org.gnome.desktop.interface color-scheme 'prefer-light'
         gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3'
-        gsettings set org.gnome.desktop.interface cursor-theme 'DMZ-Black'
+        gsettings set org.gnome.desktop.interface cursor-theme 'capitaine-cursors'
         ln -sf ~/.config/waybar/waybar-light.config ~/.config/waybar/config
         ln -sf ~/.config/waybar/style-light.css ~/.config/waybar/style.css
         ln -sf ~/.config/sway/sway-light.config ~/.config/sway/config
