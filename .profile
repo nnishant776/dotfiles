@@ -4,6 +4,7 @@ alias config='/usr/bin/git --git-dir="$HOME/.dotfiles" --work-tree=$HOME'
 alias download='aria2c -x 4 -c --file-allocation=falloc'
 alias nvimi='env features=ide nvim'
 alias nvimd='env features=default nvim'
+alias nvimm='env features=minimal nvim'
 
 # Exports
 export LANG=en_US.UTF8
