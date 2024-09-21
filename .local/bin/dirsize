@@ -1,0 +1,40 @@
+#!/usr/bin/env sh
+
+all_dir=
+dirname=
+parse_args() {
+    while [[ $# -gt 0 ]];do
+        case "$1" in
+            -h | --help)
+                echo "Usage: `basename $0` [-h,--help] [-a,--all/DIRECTORY_NAME]"
+                ;;
+            -a | --all)
+                all_dirs=1
+                ;;
+            *)
+                dirname="$1"
+                ;;
+        esac
+        shift
+    done
+}
+
+main() {
+    parse_args "$@"
+    if [[ ! -z $all_dirs ]];then
+        OLD_IFS=$IFS
+        IFS=$'\n'
+        for directory in $(ls -1);do
+            du -sh "$directory"
+        done
+        IFS=$OLD_IFS
+    elif [[ ! -z $dirname ]];then
+        if [[ -d "$dirname" ]];then
+            du -sh "$dirname"
+        else
+            echo "Directory \"$dirname\" doesn't exist. Please enter a valid directory name"
+        fi
+    fi
+}
+
+main "$@"

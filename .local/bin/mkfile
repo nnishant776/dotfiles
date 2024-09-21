@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+
+filename="$1"
+directory_name="$(dirname $filename)"
+mkdir -p "$directory_name"
+touch "$filename"

@@ -1,0 +1,226 @@
+#!/usr/bin/python
+
+import argparse
+import glob
+import os
+import re
+import sys
+import traceback
+from argparse import ArgumentParser
+from io import TextIOWrapper
+from typing import TextIO
+
+
+class FileRenameUtil(object):
+    def __init__(self):
+        self.inputFilePattern: str = None
+        self.inputFileList: list = []
+        self.outputFilePattern: str = None
+        self.outputFileList: list = []
+        self.startIdx: int = 1
+        self.replacementCount: int = None
+        self.commit: bool = False
+        self.directory: str = os.getcwd()
+        self.suffixFileName: str = None
+        self.suffixFile: TextIOWrapper = None
+        self.replaceArgs: list = None
+        self.verbose: bool = False
+        self.quiet: bool = False
+        self.renameTableHeaderColumnWidth: int = 15
+        self.logFileName: str = None
+        self.logFile: TextIO = None
+
+
+    def preprocess(self):
+        if self.suffixFileName is not None:
+            self.suffixFile = open(os.path.join(self.directory, self.suffixFileName), 'r')
+
+        if self.logFileName is not None:
+            self.logFile = open(os.path.join(os.getcwd(), self.logFileName), 'w')
+        else:
+            self.logFile = sys.stdout
+
+        if self.outputFilePattern is not None:
+            self.replacementCount = self.outputFilePattern.count('#')
+        else:
+            self.replacementCount = 0
+
+
+    def getBasenameOfFile(self, filename: str):
+        return filename.split('/')[-1]
+
+
+    def generateFileNames(self):
+        for file in glob.glob(os.path.join(self.directory, self.inputFilePattern)):
+            self.inputFileList.append(file)
+
+        self.inputFileList.sort()
+
+        if self.quiet is False:
+            self.logFile.write('\n')
+
+        for old_filename in self.inputFileList:
+            new_filename = None
+
+            if self.replaceArgs is not None:
+                new_filename = re.sub(self.replaceArgs[0], self.replaceArgs[1], old_filename)
+            else:
+                format_string = '{}'.format(
+                    str(self.startIdx).rjust(self.replacementCount, '0'))
+                new_filename = os.path.join(self.directory, self.outputFilePattern.replace(
+                    '#' * self.replacementCount, format_string))
+
+                if self.suffixFile is not None:
+                    new_filename = new_filename.split('.')
+                    new_filename.insert(-1, ' - ')
+                    new_filename.insert(-1, self.suffixFile.readline().strip())
+                    new_filename.insert(-1, '.')
+                    new_filename = ''.join(new_filename)
+
+                self.startIdx += 1
+
+            if self.verbose is True:
+                self.logFile.write(f"Generating output filename for {old_filename} as : {new_filename}\n")
+
+            self.outputFileList.append(new_filename)
+
+        if self.verbose is True:
+            self.logFile.write('\n')
+
+
+    def getFilenameTuple(self):
+        for old, new in zip(self.inputFileList, self.outputFileList):
+            yield (old, new)
+
+
+    def previewChanges(self):
+        for inputFile, outputFile in self.getFilenameTuple():
+            self.logFile.write(
+                f"{'Renaming : '.ljust(self.renameTableHeaderColumnWidth)} {self.getBasenameOfFile(inputFile)}\n")
+            self.logFile.write(
+                f"{'To : '.ljust(self.renameTableHeaderColumnWidth)} {self.getBasenameOfFile(outputFile)}\n\n")
+
+
+    def commitChanges(self):
+        rename_successful = True
+
+        for inputFile, outputFile in self.getFilenameTuple():
+            srcFile = self.getBasenameOfFile(inputFile)
+            dstFile = self.getBasenameOfFile(outputFile)
+
+            if self.quiet is False:
+                self.logFile.write(f"{'Renaming : '.ljust(self.renameTableHeaderColumnWidth)} {srcFile}\n")
+                self.logFile.write(f"{'To : '.ljust(self.renameTableHeaderColumnWidth)} {dstFile}\n\n")
+
+            try:
+                os.rename(os.path.join(self.directory, srcFile), os.path.join(self.directory, dstFile))
+            except:
+                if self.quiet is False:
+                    self.logFile.write("Error in renaming file.\n\n")
+
+                if self.verbose is True:
+                    traceback.print_exc(file=self.logFile)
+                    self.logFile.write('\n')
+
+                rename_successful = False
+
+        if rename_successful is True:
+            sys.stdout.write("Changes commited. Files renamed.\n")
+            if self.logFile is not sys.stdout:
+                self.logFile.write("Changes commited. Files renamed.\n")
+        else:
+            sys.stdout.write("Failed to complete the file rename.\n")
+            if self.logFile is not sys.stdout:
+                self.logFile.write("Failed to complete the file rename.\n")
+
+
+    def renameFiles(self):
+        self.preprocess()
+        self.generateFileNames()
+
+        if self.quiet is False:
+            self.logFile.write(f"Current working directory : {self.directory}\n\n")
+
+        if self.commit is True:
+            self.commitChanges()
+        else:
+            self.previewChanges()
+
+        self.cleanup()
+
+
+    def cleanup(self):
+        if self.suffixFile is not None:
+            self.suffixFile.close()
+
+        if self.logFile is not sys.stdout:
+            self.logFile.close()
+
+
+def argumentSanityCheck(parser: ArgumentParser, argsTarget: FileRenameUtil) -> bool:
+    if len(argsTarget.inputFilePattern) == 0:
+        sys.stdout.write(
+            'Missing input file. Input file list/pattern is empty. Please provide proper list of input files'
+            ' to operate on.\n')
+        return False
+
+    if argsTarget.replaceArgs is None and argsTarget.outputFilePattern is None:
+        sys.stdout.write('One of --output-pattern or --replace must be given to define the respective action.\n')
+        return False
+
+    if argsTarget.outputFilePattern is not None:
+        if argsTarget.replaceArgs is not None:
+            sys.stdout.write('Only of one --output-pattern or --replace is allowed at a given time.\n')
+            return False
+
+    if argsTarget.quiet is True and argsTarget.verbose is True:
+        sys.stdout.write('Only one of --quiet or --verbose should be specified.\n')
+        return False
+
+    if argsTarget.commit is False and argsTarget.quiet is True:
+        sys.stdout.write("Cannot specify --quiet in preview mode. Preview mode needs to produce output.\n")
+        return False
+
+    return True
+
+
+def processCmdlineArguments(argsTarget: FileRenameUtil) -> FileRenameUtil:
+    parser = argparse.ArgumentParser(
+        description='A utility to rename files in a given sequential order with some extra functionality')
+    parser.add_argument('--directory', '-d', metavar='dir', dest='directory',
+                        help='The directory or path of file location (Default: current directory)', type=str)
+    parser.add_argument('--input-files', '-i', metavar='PATTERN',
+                        help='Pattern string to match names of files to be renamed', dest='inputFilePattern', required=True)
+    parser.add_argument('--output-files', '-o', metavar='PATTERN',
+                        help='The name pattern of the output files (format : filename###.ext)', dest='outputFilePattern', type=str)
+    parser.add_argument('--suffix-file', '-f', dest='suffixFileName',
+                        metavar='FILE', help='File containing list of suffixes', type=str)
+    parser.add_argument('--start-index', '-s', help='The start sequence number for rename pattern (Deafult: 1)',
+                        metavar='INDEX', dest='startIdx', type=int, default=1)
+    parser.add_argument('--commit', '-c', help='Make the final changes',
+                        dest='commit', action='store_true')
+    parser.add_argument('--replace', '-r', help='Replace a common string in filenames with a given string',
+                        metavar='STRING', nargs=2, type=str, dest='replaceArgs')
+    parser.add_argument('--verbose', '-v', help='Print out detailed messages',
+                        dest='verbose', action='store_true')
+    parser.add_argument('--log', '-l', help='Name of the file to which logs should be saved',
+                        dest='logFileName', metavar='FILENAME', type=str, default='.output_result.txt')
+    parser.add_argument(
+        '--quiet', '-q', help='Suppress message/debug output', dest='quiet', action='store_true')
+
+    if len(sys.argv) < 5:
+        parser.print_help()
+        sys.stdout.write('Please provide correct number of valid arguments.\n')
+        sys.exit(1)
+
+    args = parser.parse_args(namespace=argsTarget)
+
+    if argumentSanityCheck(parser, argsTarget) is False:
+        sys.exit(1)
+
+    return args
+
+
+if __name__ == "__main__":
+    fileRenameUtil = processCmdlineArguments(FileRenameUtil())
+    fileRenameUtil.renameFiles()
