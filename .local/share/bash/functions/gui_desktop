@@ -1,0 +1,13 @@
+get_current_desktop() {
+    local desktop_list=()
+    local desktop="$XDG_SESSION_DESKTOP"
+    if [ -z "$desktop" ]; then
+        desktop="${XDG_CURRENT_DESKTOP//:/\ }"
+        for d in ${desktop}; do
+            desktop_list+=("${d,,}")
+        done
+    else
+        desktop_list+=("${desktop,,}")
+    fi
+    echo ${desktop_list[@]}
+}

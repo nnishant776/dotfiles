@@ -1,0 +1,62 @@
+. $(dirname ${BASH_SOURCE[0]})/gui_desktop
+
+set_theme_gnome() {
+    local variant="$1"
+    if [ "$variant" = "light" ]; then
+        gsettings set org.gnome.desktop.interface color-scheme 'prefer-light'
+        gsettings set org.gnome.desktop.interface cursor-theme 'breeze_cursors'
+        gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3'
+    elif [ "$variant" = "dark" ]; then
+        gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+        gsettings set org.gnome.desktop.interface cursor-theme 'Breeze_Light'
+        gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3-dark'
+    fi
+}
+
+set_theme_sway() {
+    if ! [ -d "$HOME/.config/waybar" ]; then
+        return
+    fi
+
+    if ! [ -d "$HOME/.config/sway" ]; then
+        return
+    fi
+
+    local variant="$1"
+    if [ "$variant" = "light" ]; then
+        ln -sf ~/.config/waybar/waybar-light.config ~/.config/waybar/config
+        ln -sf ~/.config/waybar/style-light.css ~/.config/waybar/style.css
+        ln -sf ~/.config/sway/sway-light.config ~/.config/sway/config
+    elif [ "$variant" = "dark" ]; then
+        ln -sf ~/.config/waybar/waybar-dark.config ~/.config/waybar/config
+        ln -sf ~/.config/waybar/style-dark.css ~/.config/waybar/style.css
+        ln -sf ~/.config/sway/sway-dark.config ~/.config/sway/config
+    fi
+    if command -v gsettings 2>&1 > /dev/null; then
+        if [ "$variant" = "light" ]; then
+            gsettings set org.gnome.desktop.interface color-scheme 'prefer-light'
+            gsettings set org.gnome.desktop.interface cursor-theme 'breeze_cursors'
+            gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3'
+        elif [ "$variant" = "dark" ]; then
+            gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
+            gsettings set org.gnome.desktop.interface cursor-theme 'Breeze_Light'
+            gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3-dark'
+        fi
+    fi
+}
+
+set_theme_neovim() {
+    local variant="$1"
+    for instance in $(ls $XDG_RUNTIME_DIR/nvim.*.0); do
+        nvim --server $instance --remote-send ":lua require('utils.ui').set_theme('$variant')<CR>"
+    done
+}
+
+set_theme() {
+    local variant="$1"
+    for desktop in $(get_current_desktop); do
+        local set_theme_func="set_theme_${desktop}"
+        eval "$set_theme_func" "$variant"
+    done
+    set_theme_neovim "$variant"
+}
