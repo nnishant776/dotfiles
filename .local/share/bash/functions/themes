@@ -1,5 +1,3 @@
-. $(dirname ${BASH_SOURCE[0]})/gui_desktop
-
 set_theme_gnome() {
     local variant="$1"
     if [ "$variant" = "light" ]; then

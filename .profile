@@ -5,4 +5,4 @@
 . $HOME/.local/share/bash/exports/exports
 
 # Functions
-. $HOME/.local/share/bash/functions/functions
+. $HOME/.local/share/bash/functions/vagrant

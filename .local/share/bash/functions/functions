@@ -1,2 +1,0 @@
-. $(dirname ${BASH_SOURCE[0]})/themes
-. $(dirname ${BASH_SOURCE[0]})/vagrant
