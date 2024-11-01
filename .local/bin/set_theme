@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
 . $(dirname $0)/../share/bash/functions/themes
-. $(dirname $0)/../share/bash/functions/gui_destkop
+. $(dirname $0)/../share/bash/functions/gui_desktop
 
 set_theme "$1"
