@@ -29,3 +29,5 @@ unset rc
 [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
 [ -f ~/.profile ] && source ~/.profile
+
+[ -f ~/.cargo/env ] && source ~/.cargo/env
