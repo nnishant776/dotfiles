@@ -1,0 +1,17 @@
+(custom-set-variables
+ '(package-selected-packages
+   '(
+     enh-ruby-mode
+     forge
+     helm-mode-manager
+     kubernetes-helm
+     lsp-pyright
+     symbols-outline
+     tmpl-mode
+     vs-dark-theme
+     vs-light-theme
+     vscode-dark-plus-theme
+     vscode-icons
+     )
+   )
+ )
