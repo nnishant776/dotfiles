@@ -52,6 +52,10 @@
   (setq! custom-safe-themes t)
   (auto-dark-mode))
 
+(use-package! treesitter-context
+  :hook (doom-first-file-read . treesitter-context-mode)
+  :config
+  (setq treesitter-context-idle-time 0.5))
 
 ;; Package configurations
 (after! elgot
@@ -119,11 +123,11 @@
 (remove-hook 'after-save-hook #'magit-after-save-refresh-status)
 (remove-hook 'magit-refresh-buffer-hook #'+magit-mark-stale-buffers-h)
 
-(require 'json)
-
 ;; =========================================================================
 ;; 1. PATH CONFIGURATIONS AND LANGUAGE DICTIONARIES
 ;; =========================================================================
+(require 'json)
+
 (defvar vscode-global-settings-path "~/.config/Code/User/settings.json"
   "Absolute file path pointing directly to your global VSCode settings profile.")
 
@@ -141,7 +145,7 @@
   "Dict structure mapping VSCode bracket language tags cleanly over to Emacs major modes.")
 
 (defvar theme-translation-alist
-  '(("Default Dark+" . doom-feather-dark)
+  '(("Default Dark+"      . doom-feather-dark)
     ("Default Light+"     . doom-feather-light))
   "Alist mapping VSCode theme strings to Doom Emacs theme symbols.")
 
@@ -342,19 +346,28 @@
 (use-package agent-shell
   :ensure t
   :config
+  ;; ----------------- Global configuration options --------------
+  (setopt agent-shell-write-inhibit-minor-modes '(aggresive-indent-mode))
+
+  ;; ----------------- Agent specific configurations ------------------
+  ;; ----------------- Antigravity ---------------------
   (setq agent-shell-google-authentication
         (agent-shell-google-make-authentication :login t))
-
   (setq agent-shell-google-gemini-environment
         (agent-shell-make-environment-variables
          "GEMINI_ACP_COMMAND" "agy"
          "AGY_BIN" "agy"
          "AGENT_AUTH_METHOD" "agy-agent"
          ))
-  ;; (setenv "AGY_BIN" "agy")
-  ;; (setenv "GEMINI_ACP_COMMAND" "agy")
-  ;; (setenv "AGENT_AUTH_METHOD" "agy-agent")
+  (setq agent-shell-google-gemini-acp-command '("agy-acp"))
 
-  ;; (setq agent-shell-custom-auth-params
-  ;;       '(:methodId "agy-agent" :name "Antigravity ACP Login"))
-  (setq agent-shell-google-gemini-acp-command '("agy-acp")))
+  ;; ------------------ Claude code -----------------------
+  (setq agent-shell-claude-environment
+        (agent-shell-make-environment-variables
+         "CLAUDE_CODE_USE_BEDROCK" "1"
+         "AWS_REGION" "us-east-1"))
+
+  ;; ------------------ Cursor -----------------------
+  (setq agent-shell-cursor-authentication
+        (agent-shell-cursor-make-authentication :login t))
+  )
