@@ -5,9 +5,8 @@
 
 ;; Global configurations
 ;; (setq
-;;  doom-theme 'doom-one
-;;  doom-font (font-spec :family "Fira Code" :size 12 :weight 'semi-light)
-;;  doom-variable-pitch-font (font-spec :family "Fira Sans" :size 13)
+;;  doom-font (font-spec :family "Fira Code" :size 13 :weight 'semi-light)
+;;  doom-variable-pitch-font (font-spec :family "Fira Code" :size 13 :weight 'semi-light)
 ;;  )
 
 ;; If you use `org' and don't want your org files in the default location below,
@@ -32,6 +31,27 @@
          ("templates/.*\\.tpl\\'"  . kubernetes-helm-mode)
          ("values\\.yaml\\'"       . yaml-mode)))
 
+(use-package auto-dark
+  :ensure t
+  :custom
+  (auto-dark-themes '((doom-feather-dark) (doom-feather-light)))
+  (auto-dark-polling-interval-seconds 5)
+  (auto-dark-allow-osascript nil)
+  (auto-dark-allow-powershell nil)
+  ;; (auto-dark-detection-method nil) ;; dangerous to be set manually
+  :hook
+  (auto-dark-dark-mode
+   . (lambda ()
+       ;; something to execute when dark mode is detected
+       ))
+  (auto-dark-light-mode
+   . (lambda ()
+       ;; something to execute when light mode is detected
+       ))
+  :init
+  (setq! custom-safe-themes t)
+  (auto-dark-mode))
+
 
 ;; Package configurations
 (after! elgot
@@ -39,6 +59,8 @@
         :prefix "c"
         :desc "Eglot show call hierarchy" "h i" #'eglot-show-call-hierarchy
         )
+  (add-to-list 'eglot-ignored-server-capabilities :documentHighlightProvider)
+  (add-to-list 'eglot-ignored-server-capabilities :semanticTokensProvider)
   )
 
 (after! diff-hl
@@ -47,11 +69,6 @@
 
 (after! smartparens
   (setq sp-highlight-pair-overlay nil)
-  )
-
-(after! eglot
-  (add-to-list 'eglot-ignored-server-capabilities :documentHighlightProvider)
-  (add-to-list 'eglot-ignored-server-capabilities :semanticTokensProvider)
   )
 
 
@@ -79,7 +96,7 @@
  projectile-auto-discard-cache t
 
  ;; Git configurations
- magit-git-executable "/usr/bin/git"
+ magit-git-executable "git"
  magit-disabled-section-inserters '(magit-insert-tags-header)
  auto-revert-check-vc-info nil
  magit-log-section-commit-count 20
@@ -88,7 +105,6 @@
 
  ;; LSP configurations
  lsp-enable-file-watchers nil
-
  )
 
 
@@ -120,12 +136,13 @@
     ("typescript" . typescript-mode)
     ("markdown"   . markdown-mode)
     ("lua"        . lua-mode)
-    ("make"       . makefile-mode))
+    ("make"       . makefile-mode)
+    ("nix"        . nix-ts-mode))
   "Dict structure mapping VSCode bracket language tags cleanly over to Emacs major modes.")
 
 (defvar theme-translation-alist
-  '(("Visual Studio Dark" . doom-vibrant)
-    ("Default Light+"     . doom-one-light))
+  '(("Default Dark+" . doom-feather-dark)
+    ("Default Light+"     . doom-feather-light))
   "Alist mapping VSCode theme strings to Doom Emacs theme symbols.")
 
 ;; Performance optimizations variables
@@ -163,7 +180,11 @@
                (t ""))
     ;; Basic Buffer Indentation Configurations
     ("editor.tabSize"
-     (setq-local tab-width val))
+     (setq-local
+      tab-width val
+      evil-shift-width val
+      ))
+
     ("editor.insertSpaces"
      (let ((is-true (and val (not (eq val :false)) (not (eq val :nil)))))
        (setq-local indent-tabs-mode (not is-true))))
@@ -191,7 +212,7 @@
 
     ;; Visual Representation Controls
     ("editor.lineNumbers"
-     (setq-local display-line-numbers
+     (setq-local display-line-numbers-type
                  (cond ((or (equal val "on") (equal val t)) t)
                        ((equal val "relative") 'relative)
                        (t nil))))
@@ -309,14 +330,31 @@
           (unless (equal doom-font global-fallback-font)
             (setq doom-font global-fallback-font)
             (set-frame-font doom-font t t))))
-      (when-let* ((active-source (or workspace-settings global-settings))
-                  (dark-theme-name (alist-get 'workbench.preferredDarkColorTheme active-source))
-                  (light-theme-name (alist-get 'workbench.preferredLightColorTheme active-source))
-                  (target-vscode-theme (if (equal (frame-parameter nil 'background-mode) 'light) light-theme-name dark-theme-name))
-                  (target-emacs-theme (cdr (assoc target-vscode-theme theme-translation-alist))))
-        (when (and target-emacs-theme (not (eq target-emacs-theme doom-theme)))
-          (setq doom-theme target-emacs-theme)
-          (load-theme doom-theme t))))))
+      )))
 
 (add-hook 'change-major-mode-after-body-hook #'apply-layered-vscode-configurations)
 (add-hook 'projectile-after-switch-project-hook #'apply-layered-vscode-configurations)
+
+
+;; --------------------- Agent Shell configuration -------------------
+(require 'acp)
+(require 'agent-shell)
+(use-package agent-shell
+  :ensure t
+  :config
+  (setq agent-shell-google-authentication
+        (agent-shell-google-make-authentication :login t))
+
+  (setq agent-shell-google-gemini-environment
+        (agent-shell-make-environment-variables
+         "GEMINI_ACP_COMMAND" "agy"
+         "AGY_BIN" "agy"
+         "AGENT_AUTH_METHOD" "agy-agent"
+         ))
+  ;; (setenv "AGY_BIN" "agy")
+  ;; (setenv "GEMINI_ACP_COMMAND" "agy")
+  ;; (setenv "AGENT_AUTH_METHOD" "agy-agent")
+
+  ;; (setq agent-shell-custom-auth-params
+  ;;       '(:methodId "agy-agent" :name "Antigravity ACP Login"))
+  (setq agent-shell-google-gemini-acp-command '("agy-acp")))

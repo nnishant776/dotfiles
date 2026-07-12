@@ -52,3 +52,11 @@
 ;; (unpin! pinned-package another-pinned-package)
 ;; ...Or *all* packages (NOT RECOMMENDED; will likely break things)
 ;; (unpin! t)
+
+(package! shell-maker)
+(package! acp)
+(package! agent-shell)
+(package! nix-ts-mode)
+(package! nix-mode)
+(package! typescript-mode)
+(package! auto-dark)
