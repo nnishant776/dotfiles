@@ -17,6 +17,8 @@
 ;;   load-prefer-newer t
 ;;   )
 
+(after! dtrt-indent
+  (dtrt-indent-mode -1))
 
 ;; External package dependencies
 (use-package! vscode-icon
@@ -58,13 +60,15 @@
   (setq treesitter-context-idle-time 0.5))
 
 ;; Package configurations
-(after! elgot
-  (map! :leader
-        :prefix "c"
-        :desc "Eglot show call hierarchy" "h i" #'eglot-show-call-hierarchy
-        )
-  (add-to-list 'eglot-ignored-server-capabilities :documentHighlightProvider)
-  (add-to-list 'eglot-ignored-server-capabilities :semanticTokensProvider)
+(after! eglot
+  (map!
+   :map eglot-mode-map
+   :leader
+   :prefix "c"
+   :desc "Eglot show call hierarchy" "h i" #'eglot-show-call-hierarchy
+   )
+  ;; (add-to-list 'eglot-ignored-server-capabilities :documentHighlightProvider)
+  ;; (add-to-list 'eglot-ignored-server-capabilities :semanticTokensProvider)
   )
 
 (after! diff-hl
@@ -79,6 +83,7 @@
 ;; Default parameter configurations
 (setq-default
  ;; Editor configurations
+ display-line-numbers-type 'relative
  display-line-numbers-width 6
  tab-width 4
  evil-shift-width 4
@@ -90,10 +95,11 @@
 (setq
 
  ;; Editor configurations
- display-line-numbers-type 'relative
+ display-line-numbers 'relative
  show-paren-mode -1
  blink-matching-paren nil
  global-emojify-mode -1
+ doom-detect-indentation-excluded-modes '(t)
 
  ;; Project manager configurations
  projectile-indexing-method 'alien
@@ -128,20 +134,22 @@
 ;; =========================================================================
 (require 'json)
 
-(defvar vscode-global-settings-path "~/.config/Code/User/settings.json"
+(defvar vscode-global-settings-path "~/.config/nvim/settings.json"
   "Absolute file path pointing directly to your global VSCode settings profile.")
 
 (defvar vscode-to-emacs-modes
-  '(("go"         . go-mode)
-    ("yaml"       . yaml-mode)
-    ("gotmpl"     . go-template-mode)
-    ("python"     . python-mode)
-    ("javascript" . js2-mode)
-    ("typescript" . typescript-mode)
-    ("markdown"   . markdown-mode)
-    ("lua"        . lua-mode)
-    ("make"       . makefile-mode)
-    ("nix"        . nix-ts-mode))
+  '(("go"                    . go-mode)
+    ("yaml"                  . yaml-mode)
+    ("gotmpl"                . go-template-mode)
+    ("python"                . python-mode)
+    ("javascript"            . js2-mode)
+    ("typescript"            . typescript-mode)
+    ("markdown"              . markdown-mode)
+    ("lua"                   . lua-ts-mode)
+    ("make"                  . makefile-mode)
+    ("nix"                   . nix-ts-mode)
+    ("json"                  . json-ts-mode)
+    ("code-workspace"        . json-ts-mode))
   "Dict structure mapping VSCode bracket language tags cleanly over to Emacs major modes.")
 
 (defvar theme-translation-alist
@@ -155,6 +163,10 @@
   "In-memory storage to prevent constantly reading the global settings.json from disk.")
 (defvar last-processed-project nil
   "Tracks the current project root to stop identical theme/font updates when jumping tabs.")
+
+(defvar-local vscode-associations-applied nil
+  "Tracks whether VSCode file associations have been applied to this buffer.")
+(put 'vscode-associations-applied 'permanent-local t)
 
 ;; =========================================================================
 ;; 2. POLYFILL HELPER: SAFELY READ AND DECODE JSON FILES WITHOUT CRASHING
@@ -187,7 +199,14 @@
      (setq-local
       tab-width val
       evil-shift-width val
-      ))
+      standard-indent val
+      indent-bars-spacing val
+      )
+     (doom/set-indent-width val)
+     ;; (message "Updated tab-width to '%d'" val)
+     ;; (message "Updated evil-shift-width to '%d'" val)
+     ;; (message "Updated standard-indent to '%d'" val)
+     (let ((is-valid (and val (not (eq val :nil))))(doom-set-indent val))))
 
     ("editor.insertSpaces"
      (let ((is-true (and val (not (eq val :false)) (not (eq val :nil)))))
@@ -216,10 +235,12 @@
 
     ;; Visual Representation Controls
     ("editor.lineNumbers"
-     (setq-local display-line-numbers-type
+     (setq-local display-line-numbers
                  (cond ((or (equal val "on") (equal val t)) t)
                        ((equal val "relative") 'relative)
-                       (t nil))))
+                       (t nil)))
+     ;; (message "Updated display-line-numbers to '%s'" display-line-numbers)
+     )
     ("editor.renderLineHighlight"
      (let ((is-true (and val (not (eq val :false)) (not (eq val :nil)))))
        (if (and (not (equal val "none")) is-true) (hl-line-mode 1) (hl-line-mode -1))))
@@ -265,18 +286,59 @@
          (workspace-settings (when workspace-json
                                (alist-get 'settings workspace-json))))
 
+    ;; (message "Current project root '%s'" project-root)
+    ;; (message "Current workspace json '%s'" workspace-json)
+
     ;; Update active tracker
     (when project-root (setq last-processed-project project-root))
+
+    ;; Apply File Associations Stage based on VSCode settings
+    (when-let ((file-path buffer-file-name)
+               (associations (append (when workspace-settings
+                                       (alist-get 'files.associations workspace-settings))
+                                     (when global-settings
+                                       (alist-get 'files.associations global-settings)))))
+      (unless vscode-associations-applied
+        (let ((matched-lang nil))
+          (catch 'found
+            (dolist (pair associations)
+              (let* ((pattern (car pair))
+                     (lang (cdr pair))
+                     (pattern-str (cond ((stringp pattern) pattern)
+                                        ((symbolp pattern) (symbol-name pattern))
+                                        (t (format "%s" pattern))))
+                     (lang-str (downcase (cond ((stringp lang) lang)
+                                               ((symbolp lang) (symbol-name lang))
+                                               (t (format "%s" lang)))))
+                     (regex (wildcard-to-regexp pattern-str)))
+                (when (if (string-match-p "/" pattern-str)
+                          (string-match-p regex file-path)
+                        (string-match-p regex (file-name-nondirectory file-path)))
+                  (setq matched-lang lang-str)
+                  (setq matched-lang-regex regex)
+                  ;; (message "Found mapping for %s in associations for regex '%s'" matched-lang regex)
+                  (throw 'found t)))))
+          (when matched-lang
+            (let ((matched-mode (cdr (assoc matched-lang vscode-to-emacs-modes))))
+              (when (and matched-mode (fboundp matched-mode))
+                (unless (eq major-mode matched-mode)
+                  (setq-local vscode-associations-applied t)
+                  ;; (message "Setting major mode to '%s'" matched-mode)
+                  (add-to-list 'auto-mode-alist (cons matched-lang-regex matched-mode))
+                  )))))))
+
 
     ;; ---------------------------------------------------------------------
     ;; RUN STAGE 1 & 2: Apply Flat Profiles (Always isolated at Buffer Level)
     ;; ---------------------------------------------------------------------
-    (when global-settings
-      (dolist (pair global-settings)
-        (unless (string-match "^\\[.*\\]$" (symbol-name (car pair)))
-          (translate-and-apply-vscode-key (car pair) (cdr pair)))))
+    ;; (when global-settings
+    ;;   (message "Applying VSCode global settings")
+    ;;   (dolist (pair global-settings)
+    ;;     (unless (string-match "^\\[.*\\]$" (symbol-name (car pair)))
+    ;;       (translate-and-apply-vscode-key (car pair) (cdr pair)))))
 
     (when workspace-settings
+      ;; (message "Applying VSCode workspace settings")
       (dolist (pair workspace-settings)
         (unless (string-match "^\\[.*\\]$" (symbol-name (car pair)))
           (translate-and-apply-vscode-key (car pair) (cdr pair)))))
@@ -287,14 +349,17 @@
     (cl-labels ((process-language-blocks (settings-alist)
                   (dolist (pair settings-alist)
                     (let ((key-str (symbol-name (car pair))))
+                      ;; (message "Inspecting key-str '%s'" key-str)
                       (when (string-match "^\\[\\(.*\\)\\]$" key-str)
                         (let* ((vscode-lang (match-string 1 key-str))
                                (matched-mode (cdr (assoc vscode-lang vscode-to-emacs-modes))))
-                          (when (and matched-mode (derived-mode-p matched-mode))
+                          ;; (message "Var dump key-str='%s' vscode-lang='%s' matched-mode='%s' current-mode='%s'" key-str vscode-lang matched-mode (derived-mode-all-parents (eval 'major-mode)))
+                          (when (eq matched-mode (car (derived-mode-all-parents major-mode)))
+                            ;; (message "Applying '%s' language settings" matched-mode)
                             (dolist (nested-pair (cdr pair))
                               (translate-and-apply-vscode-key (car nested-pair) (cdr nested-pair))))))))))
 
-      (when global-settings (process-language-blocks global-settings))
+      ;; (when global-settings (process-language-blocks global-settings))
       (when workspace-settings (process-language-blocks workspace-settings)))
 
     ;; ---------------------------------------------------------------------
@@ -336,7 +401,7 @@
             (set-frame-font doom-font t t))))
       )))
 
-(add-hook 'change-major-mode-after-body-hook #'apply-layered-vscode-configurations)
+(add-hook 'after-change-major-mode-hook #'apply-layered-vscode-configurations)
 (add-hook 'projectile-after-switch-project-hook #'apply-layered-vscode-configurations)
 
 
@@ -350,17 +415,6 @@
   (setopt agent-shell-write-inhibit-minor-modes '(aggresive-indent-mode))
 
   ;; ----------------- Agent specific configurations ------------------
-  ;; ----------------- Antigravity ---------------------
-  (setq agent-shell-google-authentication
-        (agent-shell-google-make-authentication :login t))
-  (setq agent-shell-google-gemini-environment
-        (agent-shell-make-environment-variables
-         "GEMINI_ACP_COMMAND" "agy"
-         "AGY_BIN" "agy"
-         "AGENT_AUTH_METHOD" "agy-agent"
-         ))
-  (setq agent-shell-google-gemini-acp-command '("agy-acp"))
-
   ;; ------------------ Claude code -----------------------
   (setq agent-shell-claude-environment
         (agent-shell-make-environment-variables

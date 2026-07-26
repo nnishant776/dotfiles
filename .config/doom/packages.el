@@ -53,6 +53,9 @@
 ;; ...Or *all* packages (NOT RECOMMENDED; will likely break things)
 ;; (unpin! t)
 
+(package! vs-light-theme)
+(package! vs-dark-theme)
+(package! catppuccin-theme :recipe (:host github :repo "catppuccin/emacs"))
 (package! shell-maker)
 (package! acp)
 (package! agent-shell)
@@ -62,3 +65,4 @@
 (package! auto-dark)
 (package! treesitter-context
   :recipe (:host github :repo "zbelial/treesitter-context.el"))
+(package! eglot-luau)
