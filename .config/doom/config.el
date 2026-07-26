@@ -52,21 +52,27 @@
        ))
   :init
   (setq! custom-safe-themes t)
-  (auto-dark-mode))
+  (auto-dark-mode t))
 
 (use-package! treesitter-context
   :hook (doom-first-file-read . treesitter-context-mode)
   :config
   (setq treesitter-context-idle-time 0.5))
 
+(after! persp-mode
+  (setq doom-modeline-persp-name t)    ; Displays current workspace name
+  (setq doom-modeline-display-icon t)  ; Displays workspace icon if supported
+  )
+
+
 ;; Package configurations
-(after! eglot
+(after! lsp
   (map!
-   :map eglot-mode-map
    :leader
    :prefix "c"
    :desc "Eglot show call hierarchy" "h i" #'eglot-show-call-hierarchy
    )
+  (setq eglot-autoshutdown t)
   ;; (add-to-list 'eglot-ignored-server-capabilities :documentHighlightProvider)
   ;; (add-to-list 'eglot-ignored-server-capabilities :semanticTokensProvider)
   )
@@ -149,6 +155,7 @@
     ("make"                  . makefile-mode)
     ("nix"                   . nix-ts-mode)
     ("json"                  . json-ts-mode)
+    ("cue"                   . cue-mode)
     ("code-workspace"        . json-ts-mode))
   "Dict structure mapping VSCode bracket language tags cleanly over to Emacs major modes.")
 

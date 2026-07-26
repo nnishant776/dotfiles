@@ -66,3 +66,9 @@
 (package! treesitter-context
   :recipe (:host github :repo "zbelial/treesitter-context.el"))
 (package! eglot-luau)
+(package! cue-mode)
+(package! go-template-mode)
+(package! yaml-mode)
+(package! yaml-ts-mode)
+(package! go-mode)
+(package! go-ts-mode)
