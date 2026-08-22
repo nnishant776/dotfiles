@@ -101,7 +101,7 @@
 (setq
 
  ;; Editor configurations
- display-line-numbers 'relative
+ display-line-numbers-type 'relative
  show-paren-mode -1
  blink-matching-paren nil
  global-emojify-mode -1
