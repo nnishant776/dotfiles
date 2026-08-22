@@ -1,0 +1,202 @@
+[audio]
+enable_sounds = true
+
+[bar.default]
+auto_hide = true
+capsule = true
+capsule_padding = 8.0
+capsule_radius = 4
+capsule_thickness = 0.75
+concave_edge_corners = false
+end = [
+    "media",
+    "tray",
+    "screenshot",
+    "notifications",
+    "clipboard",
+    "network",
+    "bluetooth",
+    "volume",
+    "input_volume",
+    "brightness",
+    "battery",
+    "control-center",
+    "session"
+]
+margin_ends = 0
+padding = 2
+radius = 0
+reserve_space = false
+thickness = 36
+widget_spacing = 8
+
+[battery]
+warning_threshold = 15
+
+[brightness]
+minimum_brightness = 0.05
+sync_all_monitors = true
+
+[calendar]
+enabled = true
+
+[control_center]
+width = 1000
+
+    [[control_center.shortcuts]]
+    type = "wifi"
+
+    [[control_center.shortcuts]]
+    type = "bluetooth"
+
+    [[control_center.shortcuts]]
+    type = "caffeine"
+
+    [[control_center.shortcuts]]
+    type = "power_profile"
+
+    [[control_center.shortcuts]]
+    type = "dark_mode"
+
+    [[control_center.shortcuts]]
+    type = "noctalia/screen_recorder:toggle"
+
+[desktop_widgets]
+enabled = false
+schema_version = 2
+widget_order = []
+
+    [desktop_widgets.grid]
+    cell_size = 16
+    major_interval = 4
+    visible = true
+
+    [desktop_widgets.widget]
+
+[idle]
+behavior_order = [ "lock", "screen-off", "lock-and-suspend" ]
+
+    [idle.behavior.lock]
+    action = "lock"
+    enabled = true
+    timeout = 300.0
+
+    [idle.behavior.lock-and-suspend]
+    action = "lock_and_suspend"
+    enabled = true
+    timeout = 600.0
+
+    [idle.behavior.screen-off]
+    action = "screen_off"
+    enabled = true
+    timeout = 360.0
+
+[notification]
+filter_order = []
+
+[osd]
+background_opacity = 1.0
+offset_y = 40
+
+[plugins]
+enabled = [ "noctalia/screen_recorder", "noctalia/notes" ]
+
+    [plugins.settings."local-plugins/monitor-layout:monitor_dropdown"]
+    open_near_click = true
+    placement = "attached"
+
+    [plugins.sources]
+    local_dev = "/home/admin/.config/noctalia/plugins/"
+
+    [[plugins.source]]
+    kind = "git"
+    location = "https://github.com/noctalia-dev/official-plugins"
+    name = "official"
+
+    [[plugins.source]]
+    kind = "git"
+    location = "https://github.com/noctalia-dev/community-plugins"
+    name = "community"
+
+    [[plugins.source]]
+    kind = "path"
+    location = "~/.config/noctalia/plugins/"
+    name = "local-plugins"
+
+[shell]
+corner_radius_scale = 0.5
+polkit_agent = true
+
+    [shell.keyboard_layout.custom_labels]
+    "English (US)" = "en_US"
+
+    [shell.panel]
+    clipboard_placement = "attached"
+    clipboard_position = "top_center"
+    launcher_placement = "attached"
+    polkit_placement = "attached"
+
+    [shell.screenshot]
+    confirm_region = true
+    show_cursor = true
+
+    [shell.shadow]
+    alpha = 0.5
+    direction = "center"
+
+[system.monitor]
+cpu_poll_seconds = 5
+disk_poll_seconds = 15
+gpu_poll_seconds = 10
+memory_poll_seconds = 5
+network_poll_seconds = 5
+
+[theme]
+builtin = "Nord"
+community_palette = "Catppuccin Mocha Blue"
+mode = "dark"
+source = "community"
+wallpaper_scheme = "m3-content"
+
+    [theme.templates]
+    builtin_ids = [ "alacritty", "cava", "gtk3", "hyprland", "kcolorscheme", "qt" ]
+    community_ids = [ "fuzzel", "rofi", "hyprtoolkit" ]
+
+[wallpaper.default]
+path = "/nix/store/kvadz33jn0b7craggkl7z0bd4bsa6rfc-noctalia-5.0.0/share/noctalia/assets/noctalia-wallpaper.png"
+
+[wallpaper.last]
+path = "/nix/store/kvadz33jn0b7craggkl7z0bd4bsa6rfc-noctalia-5.0.0/share/noctalia/assets/noctalia-wallpaper.png"
+
+[widget.battery]
+show_label = false
+
+[widget.bluetooth]
+hide_when_no_connected_device = true
+
+[widget.brightness]
+show_label = false
+
+[widget.input_volume]
+enabled = false
+show_label = false
+
+[widget.media]
+hide_when_no_media = true
+
+[widget.network]
+show_label = false
+
+[widget.notifications]
+hide_when_no_unread = true
+
+[widget.screenshot.actions]
+left = "screenshot-fullscreen"
+
+[widget.tray]
+drawer = true
+hide_passive = false
+match_adjacent_spacing = true
+
+[widget.volume]
+show_label = false
