@@ -94,8 +94,11 @@
  tab-width 4
  evil-shift-width 4
  global-auto-revert-mode 1
+ visible-bell nil
+ visible-cursor nil
  )
 
+(add-to-list 'default-frame-alist '(inhibit-double-buffering . t))
 
 ;; Dynamic Parameter configurations
 (setq
