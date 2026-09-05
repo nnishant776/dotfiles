@@ -58,7 +58,7 @@
 (package! catppuccin-theme :recipe (:host github :repo "catppuccin/emacs"))
 (package! shell-maker)
 (package! acp)
-(package! agent-shell :recipe (:host github :repo "nnishant776/agent-shell"))
+(package! agent-shell)
 (package! nix-ts-mode)
 (package! nix-mode)
 (package! typescript-mode)

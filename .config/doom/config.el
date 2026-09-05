@@ -434,4 +434,9 @@
   ;; ------------------ Cursor -----------------------
   (setq agent-shell-cursor-authentication
         (agent-shell-cursor-make-authentication :login t))
+
+  ;; ------------------ Antigravity ------------------
+  (setq agent-shell-antigravity-authentication
+        (agent-shell-antigravity-make-authentication :login t))
+
   )
