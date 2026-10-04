@@ -66,15 +66,16 @@
 
 
 ;; Package configurations
-(after! lsp
+(after! eglot
   (map!
    :leader
    :prefix "c"
    :desc "Eglot show call hierarchy" "h i" #'eglot-show-call-hierarchy
    )
   (setq eglot-autoshutdown t)
-  ;; (add-to-list 'eglot-ignored-server-capabilities :documentHighlightProvider)
-  ;; (add-to-list 'eglot-ignored-server-capabilities :semanticTokensProvider)
+  (add-to-list 'eglot-ignored-server-capabilities :documentHighlightProvider)
+  (add-to-list 'eglot-ignored-server-capabilities :semanticTokensProvider)
+  (add-to-list 'eglot-ignored-server-capabilities :hoverProvider)
   )
 
 (after! diff-hl
@@ -137,6 +138,7 @@
 (remove-hook 'doom-first-buffer-hook #'show-paren-mode)
 (remove-hook 'after-save-hook #'magit-after-save-refresh-status)
 (remove-hook 'magit-refresh-buffer-hook #'+magit-mark-stale-buffers-h)
+(remove-hook! '(text-mode-hook conf-mode-hook) #'display-line-numbers-mode)
 
 ;; =========================================================================
 ;; 1. PATH CONFIGURATIONS AND LANGUAGE DICTIONARIES
@@ -426,17 +428,18 @@
 
   ;; ----------------- Agent specific configurations ------------------
   ;; ------------------ Claude code -----------------------
-  (setq agent-shell-claude-environment
-        (agent-shell-make-environment-variables
-         "CLAUDE_CODE_USE_BEDROCK" "1"
-         "AWS_REGION" "us-east-1"))
+  ;; (setq agent-shell-claude-environment
+  ;;       (agent-shell-make-environment-variables
+  ;;        "CLAUDE_CODE_USE_BEDROCK" "1"
+  ;;        "AWS_REGION" "us-east-1"))
 
   ;; ------------------ Cursor -----------------------
   (setq agent-shell-cursor-authentication
         (agent-shell-cursor-make-authentication :login t))
 
   ;; ------------------ Antigravity ------------------
-  (setq agent-shell-antigravity-authentication
-        (agent-shell-antigravity-make-authentication :login t))
-
+  (setq
+   agent-shell-antigravity-authentication
+   (agent-shell-antigravity-make-authentication :login t)
+   )
   )
