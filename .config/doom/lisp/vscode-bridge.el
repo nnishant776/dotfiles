@@ -8,6 +8,7 @@
 ;;   2. the project's *.code-workspace "settings"
 ;;   3. [lang] blocks from global settings.json
 ;;   4. [lang] blocks from the workspace
+;;   5. `+vscode-mode-overrides' for the launch mode (see init.el)
 ;; As in VSCode, language-specific settings override non-language ones even
 ;; from a broader scope. The result is applied as buffer-local state, re-applied
 ;; on every major-mode change, and refreshed when a settings file is saved.
@@ -43,6 +44,17 @@ modes. `files.associations' switches to the first one, after
   "Major modes (and their derivatives) VSCode settings never apply to.
 Covers magit (via `magit-section-mode'), agent-shell and other comint shells,
 terminals, help and dired buffers.")
+
+(defvar +vscode-mode-overrides
+  (when (eq +mode 'minimal)
+    '((editor.lineNumbers . "off")
+      (editor.renderLineHighlight . "none")
+      (editor.matchBrackets . "never")
+      (editor.guides.indentation . :false)
+      (editor.stickyScroll.enabled . :false)))
+  "Settings forced for the launch mode, merged after every other layer.
+Minimal mode keeps editing settings (tab width, trimming, ...) but drops the
+visual ones.")
 
 ;;
 ;;; State
@@ -149,7 +161,8 @@ The file is only re-parsed when its modification time changes."
   (+vscode--merge (+vscode--flat-settings global)
                   (+vscode--flat-settings workspace)
                   (+vscode--language-settings global)
-                  (+vscode--language-settings workspace)))
+                  (+vscode--language-settings workspace)
+                  +vscode-mode-overrides))
 
 ;;
 ;;; File associations
@@ -250,10 +263,12 @@ settings are applied."
      (setq +vscode--indent-guides (if (+vscode--truthy val) :on :off)))
 
     ;; VSCode's sticky scroll maps to treesitter-context. Off unless set. The
-    ;; mode turns itself back off in major modes it doesn't support.
+    ;; mode turns itself back off in major modes it doesn't support. The
+    ;; package is only installed in ide mode.
     ("editor.stickyScroll.enabled"
      (if (+vscode--truthy val)
-         (treesitter-context-mode +1)
+         (when (fboundp 'treesitter-context-mode)
+           (treesitter-context-mode +1))
        (when (bound-and-true-p treesitter-context-mode)
          (treesitter-context-mode -1))))
 

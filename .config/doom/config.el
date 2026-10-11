@@ -6,9 +6,12 @@
 ;;       user-mail-address "john@doe.com")
 
 ;; Each file under lisp/ holds one concern. Comment out a line to disable it.
+;; `+mode' (see init.el) decides which ones load.
 (load! "lisp/defaults")
-(load! "lisp/ui")
-(load! "lisp/lang")
-(load! "lisp/vcs")
 (load! "lisp/vscode-bridge")
-(load! "lisp/agent-shell")
+(when (+mode>= 'default)
+  (load! "lisp/ui")
+  (load! "lisp/lang")
+  (load! "lisp/vcs"))
+(when (+mode>= 'ide)
+  (load! "lisp/agent-shell"))

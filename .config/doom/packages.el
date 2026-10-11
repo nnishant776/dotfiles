@@ -53,22 +53,28 @@
 ;; ...Or *all* packages (NOT RECOMMENDED; will likely break things)
 ;; (unpin! t)
 
+;; Every mode: the themes are cheap and only load when chosen.
 (package! vs-light-theme)
 (package! vs-dark-theme)
 (package! catppuccin-theme :recipe (:host github :repo "catppuccin/emacs"))
-(package! shell-maker)
-(package! acp)
-(package! agent-shell)
-(package! nix-ts-mode)
-(package! nix-mode)
-(package! typescript-mode)
-(package! auto-dark)
+
+;; Default and up. `+mode' is defined in init.el.
+;; smartparens comes from Doom's core (the compat module), not a module flag.
+(package! smartparens :disable (eq +mode 'minimal))
+(package! auto-dark :disable (eq +mode 'minimal))
+(package! nix-ts-mode :disable (eq +mode 'minimal))
+(package! go-template-mode :disable (eq +mode 'minimal))
+(package! cue-mode :disable (eq +mode 'minimal))
+
+;; ide only.
+(package! shell-maker :disable (not (+mode>= 'ide)))
+(package! acp :disable (not (+mode>= 'ide)))
+(package! agent-shell :disable (not (+mode>= 'ide)))
+(package! eglot-luau :disable (not (+mode>= 'ide)))
 (package! treesitter-context
-  :recipe (:host github :repo "zbelial/treesitter-context.el"))
-(package! eglot-luau)
-(package! cue-mode)
-(package! go-template-mode)
-(package! yaml-mode)
-(package! yaml-ts-mode)
-(package! go-mode)
-(package! go-ts-mode)
+  :recipe (:host github :repo "zbelial/treesitter-context.el")
+  :disable (not (+mode>= 'ide)))
+
+;; Not declared: go-ts-mode and yaml-ts-mode are built into Emacs 30, and
+;; Doom's modules already provide nix-mode, yaml-mode, go-mode and
+;; typescript-mode.
