@@ -249,6 +249,14 @@ settings are applied."
     ("editor.guides.indentation"
      (setq +vscode--indent-guides (if (+vscode--truthy val) :on :off)))
 
+    ;; VSCode's sticky scroll maps to treesitter-context. Off unless set. The
+    ;; mode turns itself back off in major modes it doesn't support.
+    ("editor.stickyScroll.enabled"
+     (if (+vscode--truthy val)
+         (treesitter-context-mode +1)
+       (when (bound-and-true-p treesitter-context-mode)
+         (treesitter-context-mode -1))))
+
     ("files.trimTrailingWhitespace"
      (if (+vscode--truthy val)
          (add-hook 'before-save-hook #'+vscode--trim-trailing-whitespace-h nil t)

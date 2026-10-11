@@ -24,8 +24,8 @@
       (message "Installed grammars: %s" (mapconcat #'symbol-name langs ", ")))))
 
 (use-package! treesitter-context
-  ;; Buffer-local mode; it turns itself back off in unsupported major modes.
-  :hook ((prog-mode yaml-ts-mode) . treesitter-context-mode)
+  ;; Enabled per buffer by the VSCode bridge from "editor.stickyScroll.enabled".
+  :defer t
   :config
   (setq treesitter-context-idle-time 0.5))
 
