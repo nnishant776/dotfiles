@@ -159,7 +159,7 @@ The file is only re-parsed when its modification time changes."
 
 (defun +vscode--defaults ()
   "Return this config's own defaults, as VSCode settings.
-They apply wheever, no settings file decides otherwise, so a node's indent
+They apply wherever no settings file decides otherwise, so a node's indent
 step follows `tab-width' (see lisp/defaults.el) instead of the node's default."
   `((editor.tabSize . ,(default-value 'tab-width))))
 
@@ -258,7 +258,7 @@ Uses the table built into Emacs' editorconfig, which also checks parent modes
 and guesses names like NAME-indent-offset. Failing that, tries the full
 MODE-indent-offset name tree-sitter modes such as `nix-ts-mode' use."
   (require 'editorconfig)
-  (let* (;; List indents by form, not by a fixed step; leave it alone.
+  (let* (;; Lisp indents by form, not by a fixed step; leave it alone.
          (editorconfig-lisp-use-default-indent t)
          (rule editorconfig-indent-size-vars))
     (or (if (functionp rule)
@@ -279,7 +279,7 @@ MODE-indent-offset name tree-sitter modes such as `nix-ts-mode' use."
                    standard-indent val
                    evil-shift-width val)
        (pcase-dolist (`(,var . ,value) (+vscode--indent-vars val))
-         ;; File-local and .dir-locals.el values win, as in editorconfig
+         ;; File-local and .dir-locals.el values win, as in editorconfig.
          (unless (assq var file-local-variables-alist)
            (set (make-local-variable var) value)))
 
