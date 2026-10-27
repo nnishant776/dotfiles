@@ -4,6 +4,7 @@
 ;;
 ;; For every file-visiting editing buffer, settings are resolved in VSCode's
 ;; precedence order, lowest first:
+;;   0. This config's defaults ('+vscode--defaults')
 ;;   1. global settings.json
 ;;   2. the project's *.code-workspace "settings"
 ;;   3. [lang] blocks from global settings.json
@@ -156,9 +157,16 @@ The file is only re-parsed when its modification time changes."
         (setf (alist-get key merged) val)))
     (nreverse merged)))
 
+(defun +vscode--defaults ()
+  "Return this config's own defaults, as VSCode settings.
+They apply wheever, no settings file decides otherwise, so a node's indent
+step follows `tab-width' (see lisp/defaults.el) instead of the node's default."
+  `((editor.tabSize . ,(default-value 'tab-width))))
+
 (defun +vscode--resolve (global workspace)
   "Resolve GLOBAL and WORKSPACE settings for the current buffer."
-  (+vscode--merge (+vscode--flat-settings global)
+  (+vscode--merge (+vscode--defaults)
+                  (+vscode--flat-settings global)
                   (+vscode--flat-settings workspace)
                   (+vscode--language-settings global)
                   (+vscode--language-settings workspace)
@@ -242,6 +250,26 @@ settings are applied."
         (when (eq (overlay-buffer ov) (current-buffer))
           (delete-overlay ov))))))
 
+(defvar editorconfig-lisp-use-default-indent)
+
+(defun +vscode--indent-vars (size)
+  "Return (VAR . VALUE) pairs that make the current major mode indent by SIZE.
+Uses the table built into Emacs' editorconfig, which also checks parent modes
+and guesses names like NAME-indent-offset. Failing that, tries the full
+MODE-indent-offset name tree-sitter modes such as `nix-ts-mode' use."
+  (require 'editorconfig)
+  (let* (;; List indents by form, not by a fixed step; leave it alone.
+         (editorconfig-lisp-use-default-indent t)
+         (rule editorconfig-indent-size-vars))
+    (or (if (functionp rule)
+            (funcall rule size)
+          (mapcar (lambda (var) (cons var size)) rule))
+        (seq-some (lambda (mode)
+                    (let ((var (intern-soft (format "%s-indent-offset" mode))))
+                      (when (and var (boundp var))
+                        `((,var . ,size)))))
+                  (derived-mode-all-parents major-mode)))))
+
 (defun +vscode--apply-key (key val)
   "Apply the VSCode setting KEY with value VAL to the current buffer."
   (pcase (symbol-name key)
@@ -249,10 +277,17 @@ settings are applied."
      (when (natnump val)
        (setq-local tab-width val
                    standard-indent val
-                   evil-shift-width val
-                   indent-bars-spacing-override val)
-       ;; Also sets the major mode's own indent variables.
-       (doom-set-indent val)))
+                   evil-shift-width val)
+       (pcase-dolist (`(,var . ,value) (+vscode--indent-vars val))
+         ;; File-local and .dir-locals.el values win, as in editorconfig
+         (unless (assq var file-local-variables-alist)
+           (set (make-local-variable var) value)))
+
+       ;; Guides follow the indent width, except in Lisp, which indents by
+       ;; form; there indent-bars uses `lisp-body-indent'.
+       (if (derived-mode-p 'lisp-data-mode)
+           (kill-local-variable 'indent-bars-spacing-override)
+         (setq-local indent-bars-spacing-override val))))
 
     ("editor.insertSpaces"
      (setq-local indent-tabs-mode (not (+vscode--truthy val))))
